@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu d'Échecs - Thème Bleu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .game-container {
+                flex-direction: row;
+            }
+        }
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 55px);
+            grid-template-rows: repeat(8, 55px);
+            border: 4px solid #1f2937;
+            border-radius: 4px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .square {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .square.light {
+            background-color: #dee3e6;
+        }
+        .square.dark {
+            background-color: #4b7399;
+        }
+        .sidebar {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 180px;
+            align-items: center;
+        }
+        #status {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="chessboard" id="chessboard"></div>
+        <div class="sidebar">
+            <div id="status">Tour des Blancs</div>
+            <button id="restart-btn">Nouvelle Partie</button>
+        </div>
+    </div>
+
+    <script>
+        const chessboard = document.getElementById('chessboard');
+
+        function createBoard() {
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    
+                    if ((row + col) % 2 === 0) {
+                        square.classList.add('light');
+                    } else {
+                        square.classList.add('dark');
+                    }
+                    
+                    chessboard.appendChild(square);
+                }
+            }
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
