@@ -40,7 +40,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            font-size: 36px;
             cursor: pointer;
+            user-select: none;
         }
         .square.light {
             background-color: #dee3e6;
@@ -88,8 +90,30 @@
 
     <script>
         const chessboard = document.getElementById('chessboard');
+        const statusDisplay = document.getElementById('status');
+        const restartBtn = document.getElementById('restart-btn');
 
-        function createBoard() {
+        // Configuration initiale de l'échiquier (P = Pions, R = Tours, N = Cavaliers, B = Fous, Q = Dame, K = Roi)
+        // Les majuscules = Blancs, les minuscules = Noirs
+        const initialBoard = [
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        ];
+
+        // Correspondance des symboles d'échecs Unicode
+        const pieces = {
+            'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+
+        function renderBoard(board) {
+            chessboard.innerHTML = '';
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
                     const square = document.createElement('div');
@@ -100,13 +124,33 @@
                     } else {
                         square.classList.add('dark');
                     }
-                    
+
+                    const pieceCode = board[row][col];
+                    if (pieceCode) {
+                        square.textContent = pieces[pieceCode];
+                        // Couleur du texte pour différencier blancs et noirs si besoin
+                        if (pieceCode === pieceCode.toUpperCase()) {
+                            square.style.color = '#ffffff'; // Pièces blanches bien visibles
+                            // Ajout d'une légère ombre pour détacher les pièces blanches du fond clair
+                            square.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
+                        } else {
+                            square.style.color = '#000000'; // Pièces noires
+                        }
+                    }
+
                     chessboard.appendChild(square);
                 }
             }
         }
 
-        createBoard();
+        // Lancer une nouvelle partie
+        restartBtn.addEventListener('click', () => {
+            renderBoard(initialBoard);
+            statusDisplay.textContent = "Tour des Blancs";
+        });
+
+        // Affichage initial au chargement de la page
+        renderBoard(initialBoard);
     </script>
 </body>
 </html>
