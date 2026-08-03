@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu d'Échecs - Thème Bleu</title>
+    <!-- Importation de chess.js pour gérer toutes les règles des échecs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -50,6 +52,12 @@
         .square.dark {
             background-color: #4b7399;
         }
+        .square.selected {
+            background-color: #7bacc7 !important; /* Couleur de sélection style Chess.com */
+        }
+        .square.highlight {
+            background-color: #a4c2f4 !important;
+        }
         .sidebar {
             background-color: #1e1e1e;
             padding: 20px;
@@ -63,6 +71,7 @@
         #status {
             font-size: 16px;
             font-weight: bold;
+            text-align: center;
         }
         button {
             background-color: #3b82f6;
@@ -89,68 +98,117 @@
     </div>
 
     <script>
-        const chessboard = document.getElementById('chessboard');
-        const statusDisplay = document.getElementById('status');
+        const game = new Chess();
+        const chessboardEl = document.getElementById('chessboard');
+        const statusEl = document.getElementById('status');
         const restartBtn = document.getElementById('restart-btn');
 
-        // Configuration initiale de l'échiquier (P = Pions, R = Tours, N = Cavaliers, B = Fous, Q = Dame, K = Roi)
-        // Les majuscules = Blancs, les minuscules = Noirs
-        const initialBoard = [
-            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', ''],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-        ];
+        let selectedSquare = null;
+        let possibleMoves = [];
 
-        // Correspondance des symboles d'échecs Unicode
-        const pieces = {
-            'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
-            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        const pieceSymbols = {
+            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
+            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
         };
 
-        function renderBoard(board) {
-            chessboard.innerHTML = '';
+        function renderBoard() {
+            chessboardEl.innerHTML = '';
+            const board = game.board();
+
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
-                    const square = document.createElement('div');
-                    square.classList.add('square');
+                    const squareEl = document.createElement('div');
+                    squareEl.classList.add('square');
                     
                     if ((row + col) % 2 === 0) {
-                        square.classList.add('light');
+                        squareEl.classList.add('light');
                     } else {
-                        square.classList.add('dark');
+                        squareEl.classList.add('dark');
                     }
 
-                    const pieceCode = board[row][col];
-                    if (pieceCode) {
-                        square.textContent = pieces[pieceCode];
-                        // Couleur du texte pour différencier blancs et noirs si besoin
-                        if (pieceCode === pieceCode.toUpperCase()) {
-                            square.style.color = '#ffffff'; // Pièces blanches bien visibles
-                            // Ajout d'une légère ombre pour détacher les pièces blanches du fond clair
-                            square.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
+                    const squareCoords = String.fromCharCode(97 + col) + (8 - row);
+
+                    // Gestion de la sélection et des coups possibles
+                    if (selectedSquare === squareCoords) {
+                        squareEl.classList.add('selected');
+                    }
+                    if (possibleMoves.includes(squareCoords)) {
+                        squareEl.classList.add('highlight');
+                    }
+
+                    const piece = board[row][col];
+                    if (piece) {
+                        squareEl.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase() ];
+                        if (piece.color === 'w') {
+                            squareEl.style.color = '#ffffff';
+                            squareEl.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
                         } else {
-                            square.style.color = '#000000'; // Pièces noires
+                            squareEl.style.color = '#000000';
                         }
                     }
 
-                    chessboard.appendChild(square);
+                    squareEl.addEventListener('click', () => handleSquareClick(squareCoords));
+                    chessboardEl.appendChild(squareEl);
+                }
+            }
+            updateStatus();
+        }
+
+        function handleSquareClick(square) {
+            if (selectedSquare === null) {
+                // Sélectionner une pièce si c'est la bonne couleur
+                const piece = game.get(square);
+                if (piece && piece.color === game.turn()) {
+                    selectedSquare = square;
+                    possibleMoves = game.moves({ square: square, verbose: true }).map(m => m.to);
+                    renderBoard();
+                }
+            } else {
+                // Tenter de déplacer la pièce
+                const move = game.move({
+                    from: selectedSquare,
+                    to: square,
+                    promotion: 'q' // Promotion automatique en Dame par simplicité
+                });
+
+                selectedSquare = null;
+                possibleMoves = [];
+
+                if (move === null) {
+                    // Si le coup est invalide, vérifier si on clique sur une autre pièce à soi
+                    const piece = game.get(square);
+                    if (piece && piece.color === game.turn()) {
+                        selectedSquare = square;
+                        possibleMoves = game.moves({ square: square, verbose: true }).map(m => m.to);
+                    }
+                }
+                renderBoard();
+            }
+        }
+
+        function updateStatus() {
+            if (game.in_checkmate()) {
+                statusEl.textContent = "Échec et mat ! Fin de partie.";
+            } else if (game.in_draw()) {
+                statusEl.textContent = "Match nul !";
+            } else {
+                let turn = game.turn() === 'w' ? "Blancs" : "Noirs";
+                statusEl.textContent = `Tour des ${turn}`;
+                if (game.in_check()) {
+                    statusEl.textContent += " (ÉCHEC !)";
                 }
             }
         }
 
-        // Lancer une nouvelle partie
         restartBtn.addEventListener('click', () => {
-            renderBoard(initialBoard);
-            statusDisplay.textContent = "Tour des Blancs";
+            game.reset();
+            selectedSquare = null;
+            possibleMoves = [];
+            renderBoard();
         });
 
-        // Affichage initial au chargement de la page
-        renderBoard(initialBoard);
+        // Premier affichage
+        renderBoard();
     </script>
 </body>
 </html>
